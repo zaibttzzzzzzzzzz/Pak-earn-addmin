@@ -1,0 +1,123 @@
+<!-- Add this inside the dashboard div -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h4>🛠 Admin Controls</h4>
+        <div class="mb-3">
+            <input type="password" id="adminPassword" class="form-control" placeholder="Admin Password">
+            <button class="btn btn-dark w-100 mt-2" onclick="showAdminPanel()">Access Admin</button>
+        </div>
+
+        <!-- Admin Panel (Hidden Initially) -->
+        <div id="adminDashboard" style="display:none;">
+            <!-- User Management -->
+            <div class="mb-4">
+                <h5>👥 All Users</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Balance</th>
+                                <th>Withdrawn</th>
+                                <th>Referrals</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userList">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Task Management -->
+            <div class="mb-4">
+                <h5>📌 Manage Tasks</h5>
+                <div class="mb-3">
+                    <input type="text" id="newTaskTitle" class="form-control mb-2" placeholder="Task Title">
+                    <input type="url" id="newTaskLink" class="form-control mb-2" placeholder="Task URL">
+                    <input type="number" id="newTaskReward" class="form-control mb-2" placeholder="Reward (PKR)">
+                    <button class="btn btn-success" onclick="addNewTask()">Add New Task</button>
+                </div>
+
+                <div id="currentTasks">
+                    <h6>Active Tasks</h6>
+                    <ul class="list-group" id="taskListAdmin">
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Top Earners -->
+            <div>
+                <h5>🏆 Top Earners</h5>
+                <ol id="topEarnersList" class="list-group">
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Admin Functions
+const ADMIN_PASSWORD = "admin123"; // Change this
+
+function showAdminPanel() {
+    if(document.getElementById('adminPassword').value === ADMIN_PASSWORD) {
+        document.getElementById('adminDashboard').style.display = 'block';
+        loadAdminData();
+    } else {
+        alert("Invalid admin password!");
+    }
+}
+
+function loadAdminData() {
+    // Load Users
+    const users = JSON.parse(localStorage.getItem('pakEarnUsers')) || [];
+    const userList = document.getElementById('userList');
+    userList.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.email}</td>
+            <td>${user.balance} PKR</td>
+            <td>${user.withdrawn} PKR</td>
+            <td>${user.referrals.length}</td>
+        </tr>
+    `).join('');
+
+    // Load Tasks
+    const tasks = JSON.parse(localStorage.getItem('pakEarnTasks')) || [];
+    document.getElementById('taskListAdmin').innerHTML = tasks.map((task, index) => `
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            ${task.title} (${task.reward} PKR)
+            <button class="btn btn-danger btn-sm" onclick="deleteTask(${index})">Delete</button>
+        </li>
+    `).join('');
+
+    // Show Top Earners
+    const topEarners = users.sort((a,b) => b.balance - a.balance).slice(0,5);
+    document.getElementById('topEarnersList').innerHTML = topEarners.map(user => `
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            ${user.email}
+            <span class="badge bg-success">${user.balance} PKR</span>
+        </li>
+    `).join('');
+}
+
+function addNewTask() {
+    const tasks = JSON.parse(localStorage.getItem('pakEarnTasks')) || [];
+    
+    tasks.push({
+        title: document.getElementById('newTaskTitle').value,
+        url: document.getElementById('newTaskLink').value,
+        reward: parseInt(document.getElementById('newTaskReward').value)
+    });
+
+    localStorage.setItem('pakEarnTasks', JSON.stringify(tasks));
+    loadAdminData();
+    alert("Task added successfully!");
+}
+
+function deleteTask(index) {
+    const tasks = JSON.parse(localStorage.getItem('pakEarnTasks')) || [];
+    tasks.splice(index, 1);
+    localStorage.setItem('pakEarnTasks', JSON.stringify(tasks));
+    loadAdminData();
+}
+</script>
